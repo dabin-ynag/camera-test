@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 및 로그인</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .link {
+            display: block;
+            text-align: center;
+            margin-top: 10px;
+            color: #007BFF;
+            cursor: pointer;
+        }
+        .link:hover {
+            text-decoration: underline;
+        }
+        #profile-pic-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+        #profile-pic {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #ccc;
+        }
+        video {
+            display: none;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+        #match-percentage {
+            margin-top: 10px;
+            font-size: 16px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <!-- 로그인 페이지 -->
+    <div id="login-container" class="container">
+        <h1>로그인</h1>
+        <form id="login-form">
+            <label for="login-username">아이디</label>
+            <input type="text" id="login-username" required>
+
+            <label for="login-password">비밀번호</label>
+            <input type="password" id="login-password" required>
+
+            <button type="submit">로그인</button>
+            <p class="link" id="to-signup">회원가입 페이지로 이동</p>
+        </form>
+    </div>
+
+    <!-- 회원가입 페이지 -->
+    <div id="signup-container" class="container" style="display:none;">
+        <h1>회원가입</h1>
+        <form id="signup-form">
+            <label for="username">아이디</label>
+            <input type="text" id="username" required>
+
+            <label for="password">비밀번호</label>
+            <input type="password" id="password" required>
+
+            <label for="gender">성별</label>
+            <select id="gender" required>
+                <option value="">선택</option>
+                <option value="male">남성</option>
+                <option value="female">여성</option>
+                <option value="other">기타</option>
+            </select>
+
+            <label for="age">나이</label>
+            <input type="number" id="age" required>
+
+            <div id="profile-pic-container">
+                <label for="profile-pic-input">프로필 사진</label>
+                <input type="file" id="profile-pic-input" accept="image/*">
+                <img id="profile-pic" src="#" alt="프로필 사진">
+                <button type="button" id="start-camera">카메라 시작</button>
+                <video id="camera" autoplay></video>
+                <div id="match-percentage"></div>
+            </div>
+
+            <label for="animal-test-link">얼굴상(동물상) 테스트 링크</label>
+            <input type="url" id="animal-test-link" placeholder="https://example.com">
+
+            <label for="animal-test-result">테스트 결과</label>
+            <textarea id="animal-test-result" rows="3" placeholder="결과를 입력하세요"></textarea>
+
+            <button type="submit">회원가입</button>
+        </form>
+    </div>
+
+    <script>
+        const signupContainer = document.getElementById('signup-container');
+        const loginContainer = document.getElementById('login-container');
+        const signupForm = document.getElementById('signup-form');
+        const loginForm = document.getElementById('login-form');
+        const toSignup = document.getElementById('to-signup');
+        const profilePicInput = document.getElementById('profile-pic-input');
+        const profilePic = document.getElementById('profile-pic');
+        const startCameraButton = document.getElementById('start-camera');
+        const camera = document.getElementById('camera');
+        const matchPercentage = document.getElementById('match-percentage');
+        let videoStream = null;
+
+        // 회원가입 페이지 이동 처리
+        toSignup.addEventListener('click', () => {
+            loginContainer.style.display = 'none';
+            signupContainer.style.display = 'block';
+        });
+
+        // 회원가입 데이터 저장 처리
+        signupForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const user = {
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value
+            };
+            localStorage.setItem(user.username, JSON.stringify(user));
+            alert('회원가입 완료!');
+            signupContainer.style.display = 'none';
+            loginContainer.style.display = 'block';
+        });
+
+        // 프로필 사진 업로드
+        profilePicInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                profilePic.src = URL.createObjectURL(file);
+            }
+        });
+
+        // 카메라 시작 버튼
+        startCameraButton.addEventListener('click', async () => {
+            try {
+                if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                    alert('카메라 기능은 HTTPS 환경에서만 사용 가능합니다.');
+                    return;
+                }
+
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                camera.srcObject = videoStream;
+                camera.style.display = 'block';
+            } catch (error) {
+                console.error("카메라를 시작할 수 없습니다:", error);
+                alert("카메라 권한을 확인하거나 다른 브라우저를 시도해보세요.");
+            }
+        });
+
+        // 스트림 정리
+        window.addEventListener('beforeunload', () => {
+            if (videoStream) {
+                const tracks = videoStream.getTracks();
+                tracks.forEach(track => track.stop());
+            }
+        });
+    </script>
+</body>
+</html>
